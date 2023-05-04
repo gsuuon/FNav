@@ -12,9 +12,10 @@ cd (fn)
 
 `j` `k` `↓` `↑` - Select down / up  
 `h` `l` `←` `→` - Go to parent / Enter dir  
+`/` - Toggle Search mode  
 `<enter>` - Pick selected directory  
 `<ctrl-enter>` - Pick parent directory  
-`<esc>` - Pick original directory
+`<esc>` - Pick original directory  
 
 ## Install
 `nu install.nu` or run what's in the file in your shell of choice
