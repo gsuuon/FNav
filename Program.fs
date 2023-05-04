@@ -16,7 +16,8 @@ let formatPathBreadcrumbs (path: string) =
 
     path.Replace(home, "~").Replace(pathSep, " > ")
 
-let listDirs path = Directory.GetDirectories path |> Array.map Path.GetFileName
+let listDirs path =
+    Directory.GetDirectories path |> Array.map Path.GetFileName
 
 let addDir path parent = Path.Combine [| parent; path |]
 
@@ -39,12 +40,10 @@ type PickAction =
     | CancelPick
     | PickDirectory of fullpath: string
 
-let rec pickFile path =
+let rec pickFile preselect path =
     let dirs = listDirs path
 
-    formatPathBreadcrumbs path
-    |> stext [ bg Color.SlateGray ]
-    |> err
+    formatPathBreadcrumbs path |> stext [ bg Color.SlateGray ] |> err
     err "\n"
 
     let rec showChoices idx =
@@ -73,20 +72,30 @@ let rec pickFile path =
         | { key = ConsoleKey.Enter } -> Select(dirs[idx])
         | _ -> showChoices idx
 
-    let selectAction = showChoices 0
+
+    let startIdx =
+        match preselect with
+        | None -> 0
+        | Some name -> defaultArg (Array.tryFindIndex ((=) name) dirs) 0
+
+    let selectAction = showChoices startIdx
+
     err (Operation.linesDelete dirs.Length)
     err (Operation.cursorUpLines 1)
     err (Operation.linesDelete 1)
 
     match selectAction with
     | Cancel -> CancelPick
-    | AddPathDir dir -> addDir dir path |> pickFile
-    | RemovePathDir -> (Directory.GetParent path).FullName |> pickFile
+    | AddPathDir dir -> addDir dir path |> pickFile None
+    | RemovePathDir ->
+        let parent = (Directory.GetParent path).FullName
+        let thisDir = Path.GetFileName path
+        pickFile (Some thisDir) parent
     | Select dir -> addDir dir path |> PickDirectory
 
 err (Operation.cursorHide)
 
-let pickedFile = pickFile Environment.CurrentDirectory
+let pickedFile = pickFile None Environment.CurrentDirectory
 
 err (Operation.cursorShow)
 
