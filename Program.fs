@@ -10,7 +10,6 @@ let sep = "\n"
 let pathSep = string Path.DirectorySeparatorChar
 
 
-
 let formatPathBreadcrumbs (path: string) =
     let home = Environment.SpecialFolder.UserProfile |> Environment.GetFolderPath
 
@@ -141,6 +140,9 @@ let rec pickFile mode preselect path =
                 | { key = ConsoleKey.L } -> AddPathDir dirs[idx]
                 | { key = ConsoleKey.LeftArrow }
                 | { key = ConsoleKey.H } -> RemovePathDir
+                | { key = ConsoleKey.Enter
+                    modifier = ConsoleModifiers.Control } ->
+                    Select path
                 | { key = ConsoleKey.Enter } ->
                     if dirs.Length = 0 then Select path else Select dirs[idx]
                 | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
