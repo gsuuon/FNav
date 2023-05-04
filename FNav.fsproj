@@ -11,8 +11,15 @@
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fn</ToolCommandName>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageOutputPath>./nupkg</PackageOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="Program.fs" />
