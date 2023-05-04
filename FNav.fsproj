@@ -8,9 +8,9 @@
   <PropertyGroup>
     <PackageId>Gsuuon.Tool.FNav</PackageId>
     <PackageVersion>0.0.2</PackageVersion>
+    <ToolCommandName>fn</ToolCommandName>
 
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>fn</ToolCommandName>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageOutputPath>./nupkg</PackageOutputPath>
