@@ -63,7 +63,6 @@ let maxlines =
 
     height - row
 
-
 let rec pickFile mode preselect path =
     let returnToParent () =
         let parent = Directory.GetParent path
@@ -142,7 +141,8 @@ let rec pickFile mode preselect path =
                 | { key = ConsoleKey.L } -> AddPathDir dirs[idx]
                 | { key = ConsoleKey.LeftArrow }
                 | { key = ConsoleKey.H } -> RemovePathDir
-                | { key = ConsoleKey.Enter } -> Select dirs[idx]
+                | { key = ConsoleKey.Enter } ->
+                    if dirs.Length = 0 then Select path else Select dirs[idx]
                 | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
                 | _ -> showChoices idx showStartIdx maxShowCount
 
@@ -150,7 +150,8 @@ let rec pickFile mode preselect path =
                 match readkey () with
                 | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
                 | { key = ConsoleKey.Backspace } -> SearchUpdate(pat[0 .. pat.Length - 2])
-                | { key = ConsoleKey.Enter } -> Select dirs[idx]
+                | { key = ConsoleKey.Enter } ->
+                    if dirs.Length = 0 then Select path else Select dirs[idx]
                 | { key = ConsoleKey.UpArrow
                     modifier = ConsoleModifiers.Control }
                 | { key = ConsoleKey.K
