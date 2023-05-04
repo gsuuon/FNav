@@ -17,14 +17,14 @@ let formatPathBreadcrumbs (path: string) =
     path.Replace(home, "~").Replace(pathSep, " > ")
 
 let listDirs path pattern =
-    Directory.GetDirectories(path, pattern)
-    |> Array.map Path.GetFileName
+    Directory.GetDirectories(path, pattern) |> Array.map Path.GetFileName
 
 let addDir path parent = Path.Combine [| parent; path |]
 
 type Key =
     { key: ConsoleKey
-      modifier: ConsoleModifiers }
+      modifier: ConsoleModifiers
+      ch: char }
 
 type SelectAction =
     | AddPathDir of dir: string
@@ -50,14 +50,16 @@ let styleUnselected = stext []
 let readkey () =
     let k = Console.ReadKey(true)
 
-    { key = k.Key; modifier = k.Modifiers }
+    { key = k.Key
+      modifier = k.Modifiers
+      ch = k.KeyChar }
 
 let rec pickFile mode preselect path =
     let dirs =
-        listDirs path <|
-            match mode with
-            | Navigate -> "*"
-            | Search pat -> $"*{pat}*"
+        listDirs path
+        <| match mode with
+           | Navigate -> "*"
+           | Search pat -> $"*{pat}*"
 
     err (formatPathBreadcrumbs path |> styleBreadcrumb)
     err "\n"
@@ -99,14 +101,17 @@ let rec pickFile mode preselect path =
             | { key = ConsoleKey.Enter } -> Select dirs[idx]
             | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
             | _ -> showChoices idx
+
         | Search pat ->
-            match Console.ReadKey().KeyChar with
-            | '/' ->
-                ToggleMode dirs[idx]
-            | '\b' ->
-                SearchUpdate (pat[0..pat.Length - 2])
-            | c ->
-                SearchUpdate (pat + string c)
+            match readkey () with
+            | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
+            | { key = ConsoleKey.Backspace } -> SearchUpdate(pat[0 .. pat.Length - 2])
+            | { key = ConsoleKey.Enter } -> Select dirs[idx]
+            | { key = ConsoleKey.UpArrow; modifier = ConsoleModifiers.Control }
+            | { key = ConsoleKey.K; modifier = ConsoleModifiers.Control } -> showChoices (idx - 1)
+            | { key = ConsoleKey.DownArrow; modifier = ConsoleModifiers.Control  }
+            | { key = ConsoleKey.J; modifier = ConsoleModifiers.Control  } -> showChoices (idx + 1)
+            | k -> SearchUpdate(pat + string k.ch)
 
     let startIdx =
         match preselect with
@@ -135,8 +140,7 @@ let rec pickFile mode preselect path =
         match mode with
         | Navigate -> pickFile (Search "") (Some lastDir) path
         | Search _ -> pickFile Navigate (Some lastDir) path
-    | SearchUpdate pat ->
-        pickFile (Search pat) preselect path
+    | SearchUpdate pat -> pickFile (Search pat) preselect path
 
 err (Operation.cursorHide)
 
