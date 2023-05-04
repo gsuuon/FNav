@@ -16,8 +16,9 @@ let formatPathBreadcrumbs (path: string) =
 
     path.Replace(home, "~").Replace(pathSep, " > ")
 
-let listDirs path =
-    Directory.GetDirectories path |> Array.map Path.GetFileName
+let listDirs path pattern =
+    Directory.GetDirectories(path, pattern)
+    |> Array.map Path.GetFileName
 
 let addDir path parent = Path.Combine [| parent; path |]
 
@@ -47,7 +48,11 @@ let readkey () =
     { key = k.Key; modifier = k.Modifiers }
 
 let rec pickFile mode preselect path =
-    let dirs = listDirs path
+    let dirs =
+        listDirs path <|
+            match mode with
+            | Navigate -> "*"
+            | Search pat -> $"*{pat}*"
 
     err (formatPathBreadcrumbs path |> stext [ bg Color.SlateGray ])
     err "\n"
