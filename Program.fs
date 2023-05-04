@@ -107,7 +107,7 @@ let rec pickFile mode preselect path =
             let idx = Math.Max(0, Math.Min(dirs.Length - 1, idx))
 
             let showStartIdx =
-                let showLastIdx = showStartIdx + maxShowCount
+                let showLastIdx = showStartIdx + maxShowCount - 1
 
                 if idx > showLastIdx then
                     showStartIdx + idx - showLastIdx
