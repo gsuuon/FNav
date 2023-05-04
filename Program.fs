@@ -62,6 +62,7 @@ let maxlines =
 
     height - row
 
+// FIXME not tail-calls
 let rec pickFile mode preselect path =
     let returnToParent () =
         let parent = Directory.GetParent path
@@ -113,10 +114,10 @@ let rec pickFile mode preselect path =
                 else
                     Math.Min(idx, showStartIdx)
 
-            let showEndIdx = Math.Min(dirs.Length - 1, showStartIdx + maxShowCount)
+            let showEndIdx = Math.Min(dirs.Length, showStartIdx + maxShowCount)
             let showCount = showEndIdx - showStartIdx
 
-            [ showStartIdx..showEndIdx ]
+            [ showStartIdx .. showEndIdx - 1 ]
             |> List.map (fun i ->
                 let dir = dirs[i]
 
@@ -124,7 +125,9 @@ let rec pickFile mode preselect path =
             |> String.concat sep
             |> err
 
-            err (Operation.cursorUpLines showCount)
+            if showCount > 1 then
+                // TODO does cursorUpLines 0 move cursor?
+                err (Operation.cursorUpLines (showCount - 1))
 
             match mode with
             | Navigate ->
@@ -137,23 +140,32 @@ let rec pickFile mode preselect path =
                 | { key = ConsoleKey.DownArrow }
                 | { key = ConsoleKey.J } -> showChoices (idx + 1) showStartIdx maxShowCount
                 | { key = ConsoleKey.RightArrow }
-                | { key = ConsoleKey.L } -> AddPathDir dirs[idx]
+                | { key = ConsoleKey.L } ->
+                    if dirs.Length > 0 then
+                        AddPathDir dirs[idx]
+                    else
+                        showChoices idx showStartIdx maxShowCount
                 | { key = ConsoleKey.LeftArrow }
                 | { key = ConsoleKey.H } -> RemovePathDir
                 | { key = ConsoleKey.Enter
-                    modifier = ConsoleModifiers.Control } ->
-                    Select path
-                | { key = ConsoleKey.Enter } ->
-                    if dirs.Length = 0 then Select path else Select dirs[idx]
-                | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
+                    modifier = ConsoleModifiers.Control } -> Select path
+                | { key = ConsoleKey.Enter } -> if dirs.Length = 0 then Select path else Select dirs[idx]
+                | { key = ConsoleKey.Oem2 } ->
+                    if dirs.Length > 0 then
+                        ToggleMode dirs[idx]
+                    else
+                        ToggleMode ""
                 | _ -> showChoices idx showStartIdx maxShowCount
 
             | Search pat ->
                 match readkey () with
-                | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
+                | { key = ConsoleKey.Oem2 } ->
+                    if dirs.Length > 0 then
+                        ToggleMode dirs[idx]
+                    else
+                        ToggleMode ""
                 | { key = ConsoleKey.Backspace } -> SearchUpdate(pat[0 .. pat.Length - 2])
-                | { key = ConsoleKey.Enter } ->
-                    if dirs.Length = 0 then Select path else Select dirs[idx]
+                | { key = ConsoleKey.Enter } -> if dirs.Length = 0 then Select path else Select dirs[idx]
                 | { key = ConsoleKey.UpArrow
                     modifier = ConsoleModifiers.Control }
                 | { key = ConsoleKey.K
