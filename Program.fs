@@ -25,26 +25,37 @@ type Key =
     { key: ConsoleKey
       modifier: ConsoleModifiers }
 
-let readkey () =
-    let k = Console.ReadKey(true)
-
-    { key = k.Key; modifier = k.Modifiers }
-
 type SelectAction =
     | AddPathDir of dir: string
     | RemovePathDir
     | Select of dir: string
+    | ToggleMode of wasOnDir: string
     | Cancel
 
 type PickAction =
     | CancelPick
     | PickDirectory of fullpath: string
 
-let rec pickFile preselect path =
+type Mode =
+    | Navigate
+    | Search of pattern: string
+
+let readkey () =
+    let k = Console.ReadKey(true)
+
+    { key = k.Key; modifier = k.Modifiers }
+
+let rec pickFile mode preselect path =
     let dirs = listDirs path
 
-    formatPathBreadcrumbs path |> stext [ bg Color.SlateGray ] |> err
+    err (formatPathBreadcrumbs path |> stext [ bg Color.SlateGray ])
     err "\n"
+
+    match mode with
+    | Navigate -> ()
+    | Search pattern ->
+        err ( (stext [fg Color.LightCyan] "Search: ") + pattern)
+        err "\n"
 
     let rec showChoices idx =
         let idx = Math.Max(0, Math.Min(dirs.Length - 1, idx))
@@ -66,12 +77,12 @@ let rec pickFile preselect path =
         | { key = ConsoleKey.DownArrow }
         | { key = ConsoleKey.J } -> showChoices (idx + 1)
         | { key = ConsoleKey.RightArrow }
-        | { key = ConsoleKey.L } -> AddPathDir(dirs[idx])
+        | { key = ConsoleKey.L } -> AddPathDir dirs[idx]
         | { key = ConsoleKey.LeftArrow }
         | { key = ConsoleKey.H } -> RemovePathDir
-        | { key = ConsoleKey.Enter } -> Select(dirs[idx])
+        | { key = ConsoleKey.Enter } -> Select dirs[idx]
+        | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
         | _ -> showChoices idx
-
 
     let startIdx =
         match preselect with
@@ -80,22 +91,30 @@ let rec pickFile preselect path =
 
     let selectAction = showChoices startIdx
 
-    err (Operation.linesDelete dirs.Length)
-    err (Operation.cursorUpLines 1)
-    err (Operation.linesDelete 1)
+    let headerLinesCount =
+        match mode with
+        | Navigate -> 1
+        | Search _ -> 2
+
+    err (Operation.cursorUpLines headerLinesCount)
+    err (Operation.linesDelete <| dirs.Length + headerLinesCount)
 
     match selectAction with
     | Cancel -> CancelPick
-    | AddPathDir dir -> addDir dir path |> pickFile None
+    | AddPathDir dir -> addDir dir path |> pickFile mode None
     | RemovePathDir ->
         let parent = (Directory.GetParent path).FullName
         let thisDir = Path.GetFileName path
-        pickFile (Some thisDir) parent
+        pickFile mode (Some thisDir) parent
     | Select dir -> addDir dir path |> PickDirectory
+    | ToggleMode lastDir ->
+        match mode with
+        | Navigate -> pickFile (Search "") (Some lastDir) path
+        | Search _ -> pickFile Navigate (Some lastDir) path
 
 err (Operation.cursorHide)
 
-let pickedFile = pickFile None Environment.CurrentDirectory
+let pickedFile = pickFile Navigate None Environment.CurrentDirectory
 
 err (Operation.cursorShow)
 
