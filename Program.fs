@@ -30,6 +30,7 @@ type SelectAction =
     | RemovePathDir
     | Select of dir: string
     | ToggleMode of wasOnDir: string
+    | SearchUpdate of newPattern: string
     | Cancel
 
 type PickAction =
@@ -68,21 +69,31 @@ let rec pickFile mode preselect path =
 
         err (Operation.cursorUpLines dirs.Length)
 
-        match readkey () with
-        | { key = ConsoleKey.C
-            modifier = ConsoleModifiers.Control }
-        | { key = ConsoleKey.Escape } -> Cancel
-        | { key = ConsoleKey.UpArrow }
-        | { key = ConsoleKey.K } -> showChoices (idx - 1)
-        | { key = ConsoleKey.DownArrow }
-        | { key = ConsoleKey.J } -> showChoices (idx + 1)
-        | { key = ConsoleKey.RightArrow }
-        | { key = ConsoleKey.L } -> AddPathDir dirs[idx]
-        | { key = ConsoleKey.LeftArrow }
-        | { key = ConsoleKey.H } -> RemovePathDir
-        | { key = ConsoleKey.Enter } -> Select dirs[idx]
-        | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
-        | _ -> showChoices idx
+        match mode with
+        | Navigate ->
+            match readkey () with
+            | { key = ConsoleKey.C
+                modifier = ConsoleModifiers.Control }
+            | { key = ConsoleKey.Escape } -> Cancel
+            | { key = ConsoleKey.UpArrow }
+            | { key = ConsoleKey.K } -> showChoices (idx - 1)
+            | { key = ConsoleKey.DownArrow }
+            | { key = ConsoleKey.J } -> showChoices (idx + 1)
+            | { key = ConsoleKey.RightArrow }
+            | { key = ConsoleKey.L } -> AddPathDir dirs[idx]
+            | { key = ConsoleKey.LeftArrow }
+            | { key = ConsoleKey.H } -> RemovePathDir
+            | { key = ConsoleKey.Enter } -> Select dirs[idx]
+            | { key = ConsoleKey.Oem2 } -> ToggleMode dirs[idx]
+            | _ -> showChoices idx
+        | Search pat ->
+            match Console.ReadKey().KeyChar with
+            | '/' ->
+                ToggleMode dirs[idx]
+            | '\b' ->
+                SearchUpdate (pat[0..pat.Length - 2])
+            | c ->
+                SearchUpdate (pat + string c)
 
     let startIdx =
         match preselect with
@@ -111,6 +122,8 @@ let rec pickFile mode preselect path =
         match mode with
         | Navigate -> pickFile (Search "") (Some lastDir) path
         | Search _ -> pickFile Navigate (Some lastDir) path
+    | SearchUpdate pat ->
+        pickFile (Search pat) preselect path
 
 err (Operation.cursorHide)
 
