@@ -5,11 +5,12 @@
     <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
-
   <PropertyGroup>
+    <PackageId>Gsuuon.Tool.FNav</PackageId>
     <PackageVersion>0.0.2</PackageVersion>
-    <ToolCommandName>fn</ToolCommandName>
+
     <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fn</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
   </PropertyGroup>
 
