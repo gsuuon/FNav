@@ -9,7 +9,7 @@ open Gsuuon.Console.Style
 let sep = "\n"
 let pathSep = string Path.DirectorySeparatorChar
 
-let selected = Color.Tan
+
 
 let formatPathBreadcrumbs (path: string) =
     let home = Environment.SpecialFolder.UserProfile |> Environment.GetFolderPath
@@ -42,6 +42,11 @@ type Mode =
     | Navigate
     | Search of pattern: string
 
+let styleBreadcrumb = stext [ bg Color.SlateGray; fg Color.MintCream ]
+let styleSearchIndicator = stext [ fg Color.LightCyan ]
+let styleSelected = stext [ bg Color.Peru; fg Color.MintCream ]
+let styleUnselected = stext []
+
 let readkey () =
     let k = Console.ReadKey(true)
 
@@ -54,13 +59,13 @@ let rec pickFile mode preselect path =
             | Navigate -> "*"
             | Search pat -> $"*{pat}*"
 
-    err (formatPathBreadcrumbs path |> stext [ bg Color.SlateGray ])
+    err (formatPathBreadcrumbs path |> styleBreadcrumb)
     err "\n"
 
     match mode with
     | Navigate -> ()
     | Search pattern ->
-        err ( (stext [fg Color.LightCyan] "Search: ") + pattern)
+        err ((styleSearchIndicator "Search: ") + pattern)
         err "\n"
 
     let rec showChoices idx =
@@ -68,7 +73,10 @@ let rec pickFile mode preselect path =
 
         dirs
         |> Array.iteri (fun i dir ->
-            if i = idx then err (stext [ bg selected ] dir) else err dir
+            if i = idx then
+                err (styleSelected dir)
+            else
+                err (styleUnselected dir)
 
             err sep)
 
