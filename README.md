@@ -17,7 +17,7 @@ cd (fn)
 `<esc>` - Pick original directory  
 `/` - Toggle Search mode  
 `<alt-h>` `<alt-l>` `<alt-j>` `<alt-k>` - Search mode select / change dirs  
-`<alt-/>` - Cycle sort-by
+`<alt-/>` - Cycle sort-by between name, modified date, accessed date
 
 
 ## Install
