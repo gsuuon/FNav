@@ -9,6 +9,17 @@ open Gsuuon.Console.Style
 let sep = "\n"
 let pathSep = string Path.DirectorySeparatorChar
 
+let usage = """Navigate through filesystem and pick a directory to stdout.
+
+Usage:
+    > fn {flags}
+
+Flags:
+    -m          sort by modified date (defaults to sorting by name)
+
+Example:
+    > cd (fn)
+"""
 
 let formatPathBreadcrumbs (path: string) =
     let home = Environment.SpecialFolder.UserProfile |> Environment.GetFolderPath
@@ -41,6 +52,17 @@ type Mode =
     | Navigate
     | Search of pattern: string
 
+type SortMethod =
+    | ByModified
+    | ByName
+
+type Opt =
+    {
+        mode : Mode
+        sort : SortMethod
+    }
+
+
 let styleBreadcrumb = stext [ bg Color.SlateGray; fg Color.MintCream ]
 let styleSearchIndicator = stext [ fg Color.LightCyan ]
 let styleSelected = stext [ bg Color.Peru; fg Color.MintCream ]
@@ -60,16 +82,17 @@ let maxlines =
     Console.BufferHeight - 4
 
 // FIXME not tail-calls
-let rec pickFile mode preselect path =
+let rec pickFile opt preselect path =
+    let mode = opt.mode
     let returnToParent () =
         let parent = Directory.GetParent path
 
         if parent = null then
-            pickFile Navigate preselect path
+            pickFile { opt with mode = Navigate} preselect path
         else
             let parentPath = parent.FullName
             let thisDir = Path.GetFileName path
-            pickFile Navigate (Some thisDir) parentPath
+            pickFile { opt with mode = Navigate } (Some thisDir) parentPath
 
     let dirs' =
         try
@@ -197,18 +220,39 @@ let rec pickFile mode preselect path =
 
         match selectAction with
         | Cancel -> CancelPick
-        | AddPathDir dir -> pickFile Navigate None (addDir dir path)
+        | AddPathDir dir -> pickFile { opt with mode = Navigate } None (addDir dir path)
         | RemovePathDir -> returnToParent ()
         | Select dir -> addDir dir path |> PickDirectory
         | ToggleMode lastDir ->
             match mode with
-            | Navigate -> pickFile (Search "") (Some lastDir) path
-            | Search _ -> pickFile Navigate (Some lastDir) path
-        | SearchUpdate pat -> pickFile (Search pat) preselect path
+            | Navigate -> pickFile { opt with mode = ( Search "") }(Some lastDir) path
+            | Search _ -> pickFile { opt with mode = Navigate } (Some lastDir) path
+        | SearchUpdate pat -> pickFile { opt with mode = ( Search pat) } preselect path
+
+let opt =
+    match Environment.GetCommandLineArgs() |> Array.tryItem 1 with
+    | Some "-m" -> 
+        {
+            sort = ByModified
+            mode = Navigate 
+        }
+    | Some "--help"
+    | Some "-h" ->
+        printfn "%s" usage
+        exit 1
+    | Some a ->
+        eprintfn "Unknown argument %s" a
+        exit 1
+    | None -> 
+        {
+            sort = ByName
+            mode = Navigate 
+        }
+
 
 err (Operation.cursorHide)
 
-let pickedFile = pickFile Navigate None Environment.CurrentDirectory
+let pickedFile = pickFile opt None Environment.CurrentDirectory
 
 err (Operation.cursorShow)
 
