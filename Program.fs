@@ -128,24 +128,21 @@ let rec pickFile opt preselect path =
         returnToParent ()
 
     | Some dirs ->
-        err (formatPathBreadcrumbs path |> styleBreadcrumb)
-        err "\n"
 
-        let header, headerLinesCount =
-            match opt with
-            | { mode = Navigate; sort = ByName } -> "", 1
-            | { mode = Navigate } ->
-                styleSort <| sprintf "Sort (%A)" opt.sort
-                + "\n"
-                , 2
-            | { mode = Search pattern } ->
-                styleSort <| sprintf "Sort (%A)" opt.sort 
-                + (styleSearchIndicator "Search: ")
-                + pattern
-                + "\n"
-                , 2
-        
-        err header
+        let headerLines =
+            [ yield formatPathBreadcrumbs path |> styleBreadcrumb 
+
+              match opt.sort with
+              | ByName -> ()
+              | x -> yield styleSort (sprintf "%A" opt.sort)
+
+              match opt.mode with
+              | Navigate -> ()
+              | Search pattern -> yield (styleSearchIndicator "Search: ") + pattern 
+            ]
+
+        err (headerLines |> String.concat "\n")
+        err "\n"
 
         let rec showChoices idx showStartIdx maxShowCount =
             let idx = Math.Max(0, Math.Min(dirs.Length - 1, idx))
@@ -171,9 +168,7 @@ let rec pickFile opt preselect path =
             |> String.concat sep
             |> err
 
-            if showCount > 1 then
-                // TODO does cursorUpLines 0 move cursor?
-                err (Operation.cursorUpLines (showCount - 1))
+            err (Operation.cursorUpLines (showCount - 1))
 
             let back () =
                 showChoices (idx - 1) showStartIdx maxShowCount
@@ -239,9 +234,8 @@ let rec pickFile opt preselect path =
 
         let selectAction = showChoices startIdx 0 maxlines
 
-
-        err (Operation.cursorUpLines headerLinesCount)
-        err (Operation.linesDelete <| dirs.Length + headerLinesCount)
+        err (Operation.cursorUpLines headerLines.Length)
+        err (Operation.linesDelete <| dirs.Length + headerLines.Length)
 
         match selectAction with
         | Cancel -> CancelPick
