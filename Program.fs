@@ -65,11 +65,11 @@ let rec pickFile mode preselect path =
         let parent = Directory.GetParent path
 
         if parent = null then
-            pickFile mode preselect path
+            pickFile Navigate preselect path
         else
             let parentPath = parent.FullName
             let thisDir = Path.GetFileName path
-            pickFile mode (Some thisDir) parentPath
+            pickFile Navigate (Some thisDir) parentPath
 
     let dirs' =
         try
@@ -195,7 +195,7 @@ let rec pickFile mode preselect path =
 
         match selectAction with
         | Cancel -> CancelPick
-        | AddPathDir dir -> addDir dir path |> pickFile mode None
+        | AddPathDir dir -> pickFile Navigate None (addDir dir path)
         | RemovePathDir -> returnToParent ()
         | Select dir -> addDir dir path |> PickDirectory
         | ToggleMode lastDir ->
