@@ -12,10 +12,36 @@ cd (fn)
 
 `j` `k` `↓` `↑` - Select down / up  
 `h` `l` `←` `→` - Go to parent / Enter dir  
-`/` - Toggle Search mode  
 `<enter>` - Pick selected directory  
 `<ctrl-enter>` - Pick parent directory  
 `<esc>` - Pick original directory  
+`/` - Toggle Search mode  
+`<alt-h>` `<alt-l>` `<alt-j>` `<alt-k>` - Search mode select / change dirs  
+
 
 ## Install
-`nu install.nu` or run what's in the file in your shell of choice
+From nuget:
+```
+dotnet tool install --global gsuuon.tool.fnav
+```
+From repo:
+```
+dotnet pack
+dotnet tool install --global --add-source ./nupkg --no-cache gsuuon.tool.fnav
+
+```
+### To alias
+nushell
+```nu
+def-env fn [] {
+  cd (^fn)
+}
+```
+bash
+```bash
+alias fn='cd $(\fn)'
+```
+powershell
+```powershell
+function fn { cd (fn.exe) }
+```
