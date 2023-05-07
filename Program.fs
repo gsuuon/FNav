@@ -126,52 +126,57 @@ let rec pickFile mode preselect path =
                 // TODO does cursorUpLines 0 move cursor?
                 err (Operation.cursorUpLines (showCount - 1))
 
-            match mode with
-            | Navigate ->
-                match readkey () with
-                | { key = ConsoleKey.C
-                    modifier = ConsoleModifiers.Control }
-                | { key = ConsoleKey.Escape } -> Cancel
-                | { key = ConsoleKey.UpArrow }
-                | { key = ConsoleKey.K } -> showChoices (idx - 1) showStartIdx maxShowCount
-                | { key = ConsoleKey.DownArrow }
-                | { key = ConsoleKey.J } -> showChoices (idx + 1) showStartIdx maxShowCount
-                | { key = ConsoleKey.RightArrow }
-                | { key = ConsoleKey.L } ->
-                    if dirs.Length > 0 then
-                        AddPathDir dirs[idx]
-                    else
-                        showChoices idx showStartIdx maxShowCount
-                | { key = ConsoleKey.LeftArrow }
-                | { key = ConsoleKey.H } -> RemovePathDir
-                | { key = ConsoleKey.Enter
-                    modifier = ConsoleModifiers.Control } -> Select path
-                | { key = ConsoleKey.Enter } -> if dirs.Length = 0 then Select path else Select dirs[idx]
-                | { ch = '/' } ->
-                    if dirs.Length > 0 then
-                        ToggleMode dirs[idx]
-                    else
-                        ToggleMode ""
-                | _ -> showChoices idx showStartIdx maxShowCount
+            let back () =
+                showChoices (idx - 1) showStartIdx maxShowCount
 
-            | Search pat ->
-                match readkey () with
-                | { ch = '/'} ->
-                    if dirs.Length > 0 then
-                        ToggleMode dirs[idx]
-                    else
-                        ToggleMode ""
-                | { key = ConsoleKey.Backspace } -> SearchUpdate(pat[0 .. pat.Length - 2])
-                | { key = ConsoleKey.Enter } -> if dirs.Length = 0 then Select path else Select dirs[idx]
-                | { key = ConsoleKey.UpArrow
-                    modifier = ConsoleModifiers.Control }
-                | { key = ConsoleKey.K
-                    modifier = ConsoleModifiers.Control } -> showChoices (idx - 1) showStartIdx maxShowCount
-                | { key = ConsoleKey.DownArrow
-                    modifier = ConsoleModifiers.Control }
-                | { key = ConsoleKey.J
-                    modifier = ConsoleModifiers.Control } -> showChoices (idx + 1) showStartIdx maxShowCount
-                | k -> SearchUpdate(pat + string k.ch)
+            let next () =
+                showChoices (idx + 1) showStartIdx maxShowCount
+
+            let child () =
+                if dirs.Length > 0 then
+                    AddPathDir dirs[idx]
+                else
+                    showChoices idx showStartIdx maxShowCount
+
+            let parent () = RemovePathDir
+
+            match mode, readkey () with
+            | _,
+              { key = ConsoleKey.C
+                modifier = ConsoleModifiers.Control }
+            | _, { key = ConsoleKey.Escape } -> Cancel
+            | _, { key = ConsoleKey.UpArrow } -> back ()
+            | _, { key = ConsoleKey.DownArrow } -> next ()
+            | _, { key = ConsoleKey.RightArrow } -> child ()
+            | _, { key = ConsoleKey.LeftArrow } -> parent ()
+            | _,
+              { key = ConsoleKey.Enter
+                modifier = ConsoleModifiers.Control } -> Select path
+            | _, { key = ConsoleKey.Enter } -> if dirs.Length = 0 then Select path else Select dirs[idx]
+            | _, { ch = '/' } ->
+                if dirs.Length > 0 then
+                    ToggleMode dirs[idx]
+                else
+                    ToggleMode ""
+            | Navigate, { key = ConsoleKey.K } -> back ()
+            | Navigate, { key = ConsoleKey.J } -> next ()
+            | Navigate, { key = ConsoleKey.L } -> child ()
+            | Navigate, { key = ConsoleKey.H } -> parent ()
+            | Navigate, _ -> showChoices idx showStartIdx maxShowCount
+            | Search _,
+              { key = ConsoleKey.K
+                modifier = ConsoleModifiers.Alt } -> back ()
+            | Search _,
+              { key = ConsoleKey.J
+                modifier = ConsoleModifiers.Alt } -> next ()
+            | Search _,
+              { key = ConsoleKey.L
+                modifier = ConsoleModifiers.Alt } -> child ()
+            | Search _,
+              { key = ConsoleKey.H
+                modifier = ConsoleModifiers.Alt } -> parent ()
+            | Search pat, { key = ConsoleKey.Backspace } -> SearchUpdate(pat[0 .. pat.Length - 2])
+            | Search pat, k -> SearchUpdate(pat + string k.ch)
 
         let startIdx =
             match preselect with
