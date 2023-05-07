@@ -114,6 +114,8 @@ let rec pickFile mode preselect path =
             let showEndIdx = Math.Min(dirs.Length, showStartIdx + maxShowCount)
             let showCount = showEndIdx - showStartIdx
 
+            err "\r"
+
             [ showStartIdx .. showEndIdx - 1 ]
             |> List.map (fun i ->
                 let dir = dirs[i]
