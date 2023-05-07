@@ -147,7 +147,7 @@ let rec pickFile mode preselect path =
                 | { key = ConsoleKey.Enter
                     modifier = ConsoleModifiers.Control } -> Select path
                 | { key = ConsoleKey.Enter } -> if dirs.Length = 0 then Select path else Select dirs[idx]
-                | { key = ConsoleKey.Oem2 } ->
+                | { ch = '/' } ->
                     if dirs.Length > 0 then
                         ToggleMode dirs[idx]
                     else
@@ -156,7 +156,7 @@ let rec pickFile mode preselect path =
 
             | Search pat ->
                 match readkey () with
-                | { key = ConsoleKey.Oem2 } ->
+                | { ch = '/'} ->
                     if dirs.Length > 0 then
                         ToggleMode dirs[idx]
                     else
