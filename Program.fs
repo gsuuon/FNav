@@ -55,12 +55,9 @@ let readkey () =
       ch = k.KeyChar }
 
 let maxlines =
-    ensureAvailableRows err 10 // at least 10
+    ensureAvailableRows err 10
 
-    let struct (col, row) = Query.getCursorPosition err
-    let height = Console.BufferHeight
-
-    height - row
+    Console.BufferHeight - 4
 
 // FIXME not tail-calls
 let rec pickFile mode preselect path =
