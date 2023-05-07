@@ -9,7 +9,8 @@ open Gsuuon.Console.Style
 let sep = "\n"
 let pathSep = string Path.DirectorySeparatorChar
 
-let usage = """Navigate through filesystem and pick a directory to stdout.
+let usage =
+    """Navigate through filesystem and pick a directory to stdout.
 
 Usage:
     > fn {flag}
@@ -56,18 +57,14 @@ type SortMethod =
     | ByModified
     | ByName
 
-type Opt =
-    {
-        mode : Mode
-        sort : SortMethod
-    }
+type Opt = { mode: Mode; sort: SortMethod }
 
 
 let styleBreadcrumb = stext [ bg Color.SlateGray; fg Color.MintCream ]
 let styleSearchIndicator = stext [ fg Color.LightCyan ]
 let styleSelected = stext [ bg Color.Peru; fg Color.MintCream ]
 let styleUnselected = stext []
-let styleSort = stext [fg Color.Tan]
+let styleSort = stext [ fg Color.Tan ]
 let styleError = stext [ bg Color.Coral ]
 
 let readkey () =
@@ -86,23 +83,21 @@ let listDirs sort path pattern =
     let dirs = Directory.GetDirectories(path, pattern)
 
     match sort with
-    | ByName ->
-        dirs
-    | ByModified ->
-        dirs |> Array.sortByDescending Directory.GetLastWriteTime
-    | ByAccessed ->
-        dirs |> Array.sortByDescending Directory.GetLastAccessTime
+    | ByName -> dirs
+    | ByModified -> dirs |> Array.sortByDescending Directory.GetLastWriteTime
+    | ByAccessed -> dirs |> Array.sortByDescending Directory.GetLastAccessTime
 
     |> Array.map Path.GetFileName
 
 // FIXME not tail-calls
 let rec pickFile opt preselect path =
     let mode = opt.mode
+
     let returnToParent () =
         let parent = Directory.GetParent path
 
         if parent = null then
-            pickFile { opt with mode = Navigate} preselect path
+            pickFile { opt with mode = Navigate } preselect path
         else
             let parentPath = parent.FullName
             let thisDir = Path.GetFileName path
@@ -130,7 +125,7 @@ let rec pickFile opt preselect path =
     | Some dirs ->
 
         let headerLines =
-            [ yield formatPathBreadcrumbs path |> styleBreadcrumb 
+            [ yield formatPathBreadcrumbs path |> styleBreadcrumb
 
               match opt.sort with
               | ByName -> ()
@@ -138,8 +133,7 @@ let rec pickFile opt preselect path =
 
               match opt.mode with
               | Navigate -> ()
-              | Search pattern -> yield (styleSearchIndicator "Search: ") + pattern 
-            ]
+              | Search pattern -> yield (styleSearchIndicator "Search: ") + pattern ]
 
         err (headerLines |> String.concat "\n")
         err "\n"
@@ -197,7 +191,9 @@ let rec pickFile opt preselect path =
               { key = ConsoleKey.Enter
                 modifier = ConsoleModifiers.Control } -> Select path
             | _, { key = ConsoleKey.Enter } -> if dirs.Length = 0 then Select path else Select dirs[idx]
-            | _, { ch = '/'; modifier = ConsoleModifiers.Alt } ->
+            | _,
+              { ch = '/'
+                modifier = ConsoleModifiers.Alt } ->
                 if dirs.Length > 0 then
                     CycleSort dirs[idx]
                 else
@@ -244,7 +240,7 @@ let rec pickFile opt preselect path =
         | Select dir -> addDir dir path |> PickDirectory
         | ToggleMode lastDir ->
             match mode with
-            | Navigate -> pickFile { opt with mode = ( Search "") }(Some lastDir) path
+            | Navigate -> pickFile { opt with mode = (Search "") } (Some lastDir) path
             | Search _ -> pickFile { opt with mode = Navigate } (Some lastDir) path
         | CycleSort lastDir ->
             let nextSort =
@@ -252,21 +248,14 @@ let rec pickFile opt preselect path =
                 | ByName -> ByModified
                 | ByModified -> ByAccessed
                 | ByAccessed -> ByName
+
             pickFile { opt with sort = nextSort } (Some lastDir) path
-        | SearchUpdate pat -> pickFile { opt with mode = ( Search pat) } preselect path
+        | SearchUpdate pat -> pickFile { opt with mode = (Search pat) } preselect path
 
 let opt =
     match Environment.GetCommandLineArgs() |> Array.tryItem 1 with
-    | Some "-a" -> 
-        {
-            sort = ByAccessed
-            mode = Navigate 
-        }
-    | Some "-m" -> 
-        {
-            sort = ByModified
-            mode = Navigate 
-        }
+    | Some "-a" -> { sort = ByAccessed; mode = Navigate }
+    | Some "-m" -> { sort = ByModified; mode = Navigate }
     | Some "--help"
     | Some "-h" ->
         printfn "%s" usage
@@ -274,11 +263,7 @@ let opt =
     | Some a ->
         eprintfn "Unknown argument %s" a
         exit 1
-    | None -> 
-        {
-            sort = ByName
-            mode = Navigate 
-        }
+    | None -> { sort = ByName; mode = Navigate }
 
 err (Operation.cursorHide)
 
