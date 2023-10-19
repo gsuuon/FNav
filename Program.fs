@@ -234,7 +234,8 @@ let rec pickFile opt preselect path =
 
         let selectAction = showChoices startIdx 0 maxlines
 
-        err (Operation.cursorUpLines (headerLines.Length - 2))
+        let upLines = headerLines.Length - 1
+        if upLines > 0 then err (Operation.cursorUpLines upLines)
         err (Operation.linesDelete <| (headerLines.Length + dirs.Length))
 
         match selectAction with
