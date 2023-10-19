@@ -6,7 +6,6 @@ open Gsuuon.Console.Buffer
 open Gsuuon.Console.Vterm
 open Gsuuon.Console.Style
 
-let sep = "\n"
 let pathSep = string Path.DirectorySeparatorChar
 
 let usage =
@@ -136,7 +135,6 @@ let rec pickFile opt preselect path =
               | Search pattern -> yield (styleSearchIndicator "Search: ") + pattern ]
 
         err (headerLines |> String.concat "\n")
-        err "\n"
 
         let rec showChoices idx showStartIdx maxShowCount =
             let idx = Math.Max(0, Math.Min(dirs.Length - 1, idx))
@@ -152,17 +150,23 @@ let rec pickFile opt preselect path =
             let showEndIdx = Math.Min(dirs.Length, showStartIdx + maxShowCount)
             let showCount = showEndIdx - showStartIdx
 
-            err "\r"
+            err "\n"
 
             [ showStartIdx .. showEndIdx - 1 ]
             |> List.map (fun i ->
                 let dir = dirs[i]
 
-                Operation.eraseLine + if i = idx then styleSelected dir else styleUnselected dir)
-            |> String.concat sep
+                Operation.eraseLine + (
+                    if i = idx then
+                        styleSelected dir
+                    else
+                        styleUnselected dir
+                )
+            )
+            |> String.concat "\n"
             |> err
 
-            err (Operation.cursorUpLines (showCount - 1))
+            err (Operation.cursorUpLines showCount)
 
             let back () =
                 showChoices (idx - 1) showStartIdx maxShowCount
@@ -230,8 +234,8 @@ let rec pickFile opt preselect path =
 
         let selectAction = showChoices startIdx 0 maxlines
 
-        err (Operation.cursorUpLines headerLines.Length)
-        err (Operation.linesDelete <| dirs.Length + headerLines.Length)
+        err (Operation.cursorUpLines (headerLines.Length - 2))
+        err (Operation.linesDelete <| (headerLines.Length + dirs.Length))
 
         match selectAction with
         | Cancel -> CancelPick
