@@ -1,7 +1,7 @@
 # FNav
 F# Navigator
 
-Simple directory navigator that outputs final selection to stdout, letting you `cd (fn)` or `fn | cd $in`
+Simple directory navigator that renders to stderr and outputs the directory selection to stdout, letting you `cd (fn)` or `fn | cd $in` without writing intermediate files or any other setup.
 
 https://user-images.githubusercontent.com/6422188/236075604-7f1aef58-4c4a-4917-9179-3376cc451171.mp4
 
@@ -17,7 +17,7 @@ cd (fn)
 `<esc>` - Pick original directory  
 `/` - Toggle Search mode  
 `<alt-h>` `<alt-l>` `<alt-j>` `<alt-k>` - Search mode select / change dirs  
-`<alt-/>` - Cycle sort-by between name, modified date, accessed date
+`<alt-/>` - Cycle the list sort-by between: name, modified date, accessed date
 
 
 ## Install
